@@ -1,0 +1,34 @@
+name: Paquete para el servidor
+
+on:
+  push:
+    branches: [main, 'entrega-*']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  paquete:
+    name: Armar paquete del sitio
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Revisar que el sitio esté completo
+        run: |
+          test -f index.html
+          test -f robots.txt
+          test -f sitemap.xml
+          echo "Páginas: $(find . -name index.html -not -path './.git/*' | wc -l)"
+
+      - name: Armar paquete
+        run: |
+          mkdir paquete
+          rsync -a --exclude='.git' --exclude='.github' --exclude='paquete' ./ paquete/
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ricardo-guru-${{ github.ref_name }}-${{ github.run_number }}
+          path: paquete/
+          retention-days: 30
